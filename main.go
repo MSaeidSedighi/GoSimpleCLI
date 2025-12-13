@@ -15,11 +15,29 @@ type User struct {
 	credit   int
 }
 
+type Notification interface {
+	Send(msg string)
+}
+
+type SMSNotif struct {
+}
+
+func (SMSNotif) Send(msg string) {
+	fmt.Println("SMS:", msg)
+}
+
+type EmailNotif struct {
+}
+
+func (EmailNotif) Send(msg string) {
+	fmt.Println("Email:", msg)
+}
+
 var users = []User{}
 
 var wg = sync.WaitGroup{}
 
-func addUser(username, password string) {
+func addUser(username, password string, notifier Notification) {
 	for _, user := range users {
 		if user.username == username {
 			fmt.Println("ERROR: this username exists!")
@@ -31,13 +49,15 @@ func addUser(username, password string) {
 		password: password,
 		credit:   0,
 	})
-	fmt.Println("New user added successfully.")
+	// fmt.Println("New user added successfully.")
+	notifier.Send("A new user is now added.")
 }
 
-func authenticate(username, password string) int {
+func authenticate(username, password string, notifier Notification) int {
 	for id, user := range users {
 		if user.username == username && user.password == password {
-			fmt.Println("Successful login.")
+			// fmt.Println("Successful login.")
+			notifier.Send(fmt.Sprintf("Login successful. Welcome %v", users[id].username))
 			return id
 		} else if user.username == username {
 			fmt.Println("ERROR: Wrong password!")
@@ -48,7 +68,7 @@ func authenticate(username, password string) int {
 	return -1
 }
 
-func withdraw(amount, userId int) {
+func withdraw(amount, userId int, notifier Notification) {
 	if amount <= 0 {
 		fmt.Println("ERROR: invalid amount (tip: amount > 0)")
 		return
@@ -58,16 +78,18 @@ func withdraw(amount, userId int) {
 		return
 	}
 	users[userId].credit -= amount
-	fmt.Println("Successful withdraw")
+	notifier.Send(fmt.Sprintf("A new withdraw! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
+	// fmt.Println("Successful withdraw")
 }
 
-func deposit(amount, userId int) {
+func deposit(amount, userId int, notifier Notification) {
 	if amount <= 0 {
 		fmt.Println("ERROR: invalid amount (tip: amount > 0)")
 		return
 	}
 	users[userId].credit += amount
-	fmt.Println("Successful deposit.")
+	notifier.Send(fmt.Sprintf("A new deposit! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
+	// fmt.Println("Successful deposit.")
 }
 
 func main() {
@@ -75,6 +97,8 @@ func main() {
 	var isLoggedIn = false
 	var id int
 	reader := bufio.NewReader(os.Stdin)
+	sms_notifier := SMSNotif{}
+	email_notifier := EmailNotif{}
 
 	for {
 		if isLoggedIn {
@@ -97,10 +121,10 @@ func main() {
 				continue
 			}
 			if isLoggedIn {
-				fmt.Println("ERROR: User are already logged in.")
+				fmt.Println("ERROR: User is already logged in.")
 				continue
 			}
-			addUser(fields[1], fields[2])
+			addUser(fields[1], fields[2], sms_notifier)
 		case "login":
 			// login
 			if len(fields) < 3 {
@@ -108,10 +132,10 @@ func main() {
 				continue
 			}
 			if isLoggedIn {
-				fmt.Println("ERROR: User are already logged in.")
+				fmt.Println("ERROR: User is already logged in.")
 				continue
 			}
-			result := authenticate(fields[1], fields[2])
+			result := authenticate(fields[1], fields[2], sms_notifier)
 			if result != -1 {
 				isLoggedIn = true
 				id = result
@@ -134,7 +158,7 @@ func main() {
 			if err != nil {
 				fmt.Println(err)
 			}
-			deposit(amount, id)
+			deposit(amount, id, email_notifier)
 		case "withdraw":
 			// withdraw
 			if !isLoggedIn {
@@ -150,10 +174,10 @@ func main() {
 				fmt.Println(err)
 				continue
 			}
-			withdraw(amount, id)
+			withdraw(amount, id, email_notifier)
 		case "users":
 			// see users
-			fmt.Println(users)
+			fmt.Printf("%+v\n", users)
 		case "credit":
 			// see credit
 			if !isLoggedIn {
