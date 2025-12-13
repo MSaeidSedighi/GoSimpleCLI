@@ -87,8 +87,8 @@ func main() {
 			}
 			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				deposit(amount, id, email_notifier)
-				wg.Done()
 			}()
 		case "withdraw":
 			// withdraw
@@ -107,8 +107,8 @@ func main() {
 			}
 			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				withdraw(amount, id, email_notifier)
-				wg.Done()
 			}()
 		case "users":
 			// see users
