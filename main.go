@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"./notification"
+	"GO/notification"
 )
 
 var users = []User{}
@@ -19,11 +19,15 @@ func main() {
 	fmt.Println("Welcome to CLI")
 	var isLoggedIn = false
 	var id int
+	var isExitCommand = false
 	reader := bufio.NewReader(os.Stdin)
 	sms_notifier := notification.SMSNotif{}
 	email_notifier := notification.EmailNotif{}
 
 	for {
+		if isExitCommand {
+			break
+		}
 		if isLoggedIn {
 			fmt.Printf("%v->", users[id].username)
 		} else {
@@ -81,7 +85,8 @@ func main() {
 			if err != nil {
 				fmt.Println(err)
 			}
-			deposit(amount, id, email_notifier)
+			wg.Add(1)
+			go deposit(amount, id, email_notifier)
 		case "withdraw":
 			// withdraw
 			if !isLoggedIn {
@@ -97,7 +102,8 @@ func main() {
 				fmt.Println(err)
 				continue
 			}
-			withdraw(amount, id, email_notifier)
+			wg.Add(1)
+			go withdraw(amount, id, email_notifier)
 		case "users":
 			// see users
 			fmt.Printf("%+v\n", users)
@@ -108,8 +114,11 @@ func main() {
 				continue
 			}
 			fmt.Printf("Your credit: %v.\n", users[id].credit)
+		case "exit":
+			isExitCommand = true
 		default:
 			fmt.Println("ERROR: command not defined!")
 		}
 	}
+	wg.Wait()
 }

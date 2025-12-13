@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"time"
 
-	"./notification"
+	"GO/notification"
 )
 
 type User struct {
@@ -44,6 +45,7 @@ func authenticate(username, password string, notifier notification.Notification)
 }
 
 func withdraw(amount, userId int, notifier notification.Notification) {
+	time.Sleep(20 * time.Second)
 	if amount <= 0 {
 		fmt.Println("ERROR: invalid amount (tip: amount > 0)")
 		return
@@ -55,9 +57,11 @@ func withdraw(amount, userId int, notifier notification.Notification) {
 	users[userId].credit -= amount
 	notifier.Send(fmt.Sprintf("A new withdraw! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
 	// fmt.Println("Successful withdraw")
+	wg.Done()
 }
 
 func deposit(amount, userId int, notifier notification.Notification) {
+	time.Sleep(20 * time.Second)
 	if amount <= 0 {
 		fmt.Println("ERROR: invalid amount (tip: amount > 0)")
 		return
@@ -65,4 +69,5 @@ func deposit(amount, userId int, notifier notification.Notification) {
 	users[userId].credit += amount
 	notifier.Send(fmt.Sprintf("A new deposit! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
 	// fmt.Println("Successful deposit.")
+	wg.Done()
 }
