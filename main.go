@@ -7,98 +7,21 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"./notification"
 )
-
-type User struct {
-	username string
-	password string
-	credit   int
-}
-
-type Notification interface {
-	Send(msg string)
-}
-
-type SMSNotif struct {
-}
-
-func (SMSNotif) Send(msg string) {
-	fmt.Println("SMS:", msg)
-}
-
-type EmailNotif struct {
-}
-
-func (EmailNotif) Send(msg string) {
-	fmt.Println("Email:", msg)
-}
 
 var users = []User{}
 
 var wg = sync.WaitGroup{}
-
-func addUser(username, password string, notifier Notification) {
-	for _, user := range users {
-		if user.username == username {
-			fmt.Println("ERROR: this username exists!")
-			return
-		}
-	}
-	users = append(users, User{
-		username: username,
-		password: password,
-		credit:   0,
-	})
-	// fmt.Println("New user added successfully.")
-	notifier.Send("A new user is now added.")
-}
-
-func authenticate(username, password string, notifier Notification) int {
-	for id, user := range users {
-		if user.username == username && user.password == password {
-			// fmt.Println("Successful login.")
-			notifier.Send(fmt.Sprintf("Login successful. Welcome %v", users[id].username))
-			return id
-		} else if user.username == username {
-			fmt.Println("ERROR: Wrong password!")
-			return -1
-		}
-	}
-	fmt.Println("ERROR: User does not exist!")
-	return -1
-}
-
-func withdraw(amount, userId int, notifier Notification) {
-	if amount <= 0 {
-		fmt.Println("ERROR: invalid amount (tip: amount > 0)")
-		return
-	}
-	if users[userId].credit < amount {
-		fmt.Printf("ERROR: Insufficient credit: %v.\n", users[userId].credit)
-		return
-	}
-	users[userId].credit -= amount
-	notifier.Send(fmt.Sprintf("A new withdraw! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
-	// fmt.Println("Successful withdraw")
-}
-
-func deposit(amount, userId int, notifier Notification) {
-	if amount <= 0 {
-		fmt.Println("ERROR: invalid amount (tip: amount > 0)")
-		return
-	}
-	users[userId].credit += amount
-	notifier.Send(fmt.Sprintf("A new deposit! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
-	// fmt.Println("Successful deposit.")
-}
 
 func main() {
 	fmt.Println("Welcome to CLI")
 	var isLoggedIn = false
 	var id int
 	reader := bufio.NewReader(os.Stdin)
-	sms_notifier := SMSNotif{}
-	email_notifier := EmailNotif{}
+	sms_notifier := notification.SMSNotif{}
+	email_notifier := notification.EmailNotif{}
 
 	for {
 		if isLoggedIn {
