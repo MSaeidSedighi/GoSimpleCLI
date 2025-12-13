@@ -86,7 +86,10 @@ func main() {
 				fmt.Println(err)
 			}
 			wg.Add(1)
-			go deposit(amount, id, email_notifier)
+			go func() {
+				deposit(amount, id, email_notifier)
+				wg.Done()
+			}()
 		case "withdraw":
 			// withdraw
 			if !isLoggedIn {
@@ -103,7 +106,10 @@ func main() {
 				continue
 			}
 			wg.Add(1)
-			go withdraw(amount, id, email_notifier)
+			go func() {
+				withdraw(amount, id, email_notifier)
+				wg.Done()
+			}()
 		case "users":
 			// see users
 			fmt.Printf("%+v\n", users)

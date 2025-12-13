@@ -57,7 +57,6 @@ func withdraw(amount, userId int, notifier notification.Notification) {
 	users[userId].credit -= amount
 	notifier.Send(fmt.Sprintf("A new withdraw! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
 	// fmt.Println("Successful withdraw")
-	wg.Done()
 }
 
 func deposit(amount, userId int, notifier notification.Notification) {
@@ -69,5 +68,4 @@ func deposit(amount, userId int, notifier notification.Notification) {
 	users[userId].credit += amount
 	notifier.Send(fmt.Sprintf("A new deposit! User %v's new credit is now %v.", users[userId].username, users[userId].credit))
 	// fmt.Println("Successful deposit.")
-	wg.Done()
 }
